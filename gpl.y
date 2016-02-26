@@ -138,22 +138,36 @@ using namespace std;
 %token T_ABS                 "abs"
 %token T_RANDOM              "random"
 
-%left T_NOT                 "!"
-%left T_OR                  "||"
-%left T_AND                 "&&"
+%token T_NOT                "!"
+%left T_NOT                 
+%token T_OR                 "||"
+%left T_OR                  
+%token T_AND                "&&"
+%left T_AND                 
 
-%left T_NOT_EQUAL           "!="
-%left T_EQUAL               "=="
-%left T_GREATER_EQUAL       ">="
-%left T_LESS_EQUAL          "<="
-%left T_GREATER             ">"
-%left T_LESS                "<"
+%token T_NOT_EQUAL          "!="
+%left T_NOT_EQUAL      
+%token T_EQUAL              "=="
+%left T_EQUAL
+%token T_GREATER_EQUAL      ">="         
+%left T_GREATER_EQUAL   
+%token T_LESS_EQUAL         "<="    
+%left T_LESS_EQUAL
+%token T_GREATER            ">"
+%left T_GREATER    
+%token T_LESS               "<"
+%left T_LESS                
 
-%left T_MINUS               "-"
-%left T_PLUS                 "+"
-%left T_MOD                  "%"
-%left T_DIVIDE               "/"
-%left T_ASTERISK             "*"
+%token T_MINUS              "-"      
+%left T_MINUS               
+%token T_PLUS               "+"
+%left T_PLUS     
+%token T_MOD                 "%"            
+%left T_MOD                  
+%token T_DIVIDE              "/"
+%left T_DIVIDE  
+%token T_ASTERISK            "*"             
+%left T_ASTERISK           
 
 %token T_ON                  "on"
 %token T_SPACE               "space"
