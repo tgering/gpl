@@ -47,6 +47,7 @@ extern int line_count;            // current line in the input; from record.l
 #include <string>
 using namespace std;
 
+Game_object *cur_object_under_construction;
 // bison syntax to indicate the end of the header
 %} 
 
@@ -73,6 +74,12 @@ using namespace std;
 {
   #include "expression.h" 
   #include "variable.h" 
+  #include "game_object.h"
+  #include "triangle.h"
+  #include "rectangle.h"
+  #include "circle.h"
+  #include "textbox.h"
+  #include "pixmap.h"
   #include <sstream>
 }
 
@@ -209,6 +216,7 @@ using namespace std;
 // used for characters that are not part of the language
 %token T_ERROR               "error"
 
+%type <union_int> object_type
 %type <union_int> simple_type
 %type <union_expression> expression
 %type <union_expression> optional_initializer
@@ -260,7 +268,7 @@ simple_type  T_ID  optional_initializer {
         //Insert symbol into the table
         Symbol *s = my_table->lookup(*($2));
         if(s==NULL){
-            Symbol *s = new Symbol;
+            Symbol *s = new Symbol();
             s->type = INT;
             s->name = *($2);
             s->value = new V(initial_value);
@@ -278,7 +286,7 @@ simple_type  T_ID  optional_initializer {
 
         Symbol *s = my_table->lookup(*($2));
         if(s==NULL){
-            Symbol *s = new Symbol;
+            Symbol *s = new Symbol();
             s->type = STRING;
             s->name = *($2);
             s->value = new V(initial_value);
@@ -302,7 +310,7 @@ simple_type  T_ID  optional_initializer {
 
         Symbol *s = my_table->lookup(*($2));
         if(s==NULL){
-            Symbol *s = new Symbol;
+            Symbol *s = new Symbol();
             s->type = DOUBLE;
             s->name = *($2);
             s->value = new V(initial_value);
@@ -323,7 +331,7 @@ simple_type  T_ID  optional_initializer {
     else if($1 == T_INT){
         Symbol *s = my_table->lookup(*($2));
         if(s==NULL){
-            Symbol *s = new Symbol;
+            Symbol *s = new Symbol();
             s->type = INT_ARRAY;
             s->name = *($2);
             s->value = new V(INT_ARRAY, $4->eval_int());     
@@ -336,7 +344,7 @@ simple_type  T_ID  optional_initializer {
     else if($1 == T_STRING){
         Symbol *s = my_table->lookup(*($2));
         if(s==NULL){
-            Symbol *s = new Symbol;
+            Symbol *s = new Symbol();
             s->type = STRING_ARRAY;
             s->name = *($2);
             s->value = new V(STRING_ARRAY, $4->eval_int());
@@ -349,7 +357,7 @@ simple_type  T_ID  optional_initializer {
     else if($1 == T_DOUBLE){
         Symbol *s = my_table->lookup(*($2));
         if(s==NULL){
-            Symbol *s = new Symbol;
+            Symbol *s = new Symbol();
             s->type = DOUBLE_ARRAY;
             s->name = *($2);
             s->value = new V(DOUBLE_ARRAY, $4->eval_int());
@@ -383,17 +391,44 @@ optional_initializer:
 
 //---------------------------------------------------------------------
 object_declaration:
-    object_type T_ID T_LPAREN parameter_list_or_empty T_RPAREN
+    object_type T_ID {
+        switch($1){
+            case TRIANGLE:
+                cur_object_under_construction = new Triangle();
+                break;
+            case PIXMAP:
+                cur_object_under_construction = new Pixmap();
+                break;
+            case CIRCLE:
+                cur_object_under_construction = new Circle();
+                break;
+            case RECTANGLE:
+                cur_object_under_construction = new Rectangle();
+                break;
+            case TEXTBOX:
+                cur_object_under_construction = new Textbox();
+                break;
+            default:
+                break;
+        }
+    } 
+    T_LPAREN parameter_list_or_empty T_RPAREN
+    {
+        Symbol *s = new Symbol(cur_object_under_construction);
+        s->type = GAME_OBJECT;
+        s->name = *($2);
+        my_table->insert(*($2),s);
+    }
     | object_type T_ID T_LBRACKET expression T_RBRACKET
     ;
 
 //---------------------------------------------------------------------
 object_type:
-    T_TRIANGLE
-    | T_PIXMAP
-    | T_CIRCLE
-    | T_RECTANGLE
-    | T_TEXTBOX
+    T_TRIANGLE{$$ = TRIANGLE;}
+    | T_PIXMAP{$$ = PIXMAP;}
+    | T_CIRCLE{$$ = CIRCLE;}
+    | T_RECTANGLE{$$ = RECTANGLE;}
+    | T_TEXTBOX{$$ = TEXTBOX;}
     ;
 
 //---------------------------------------------------------------------

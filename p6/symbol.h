@@ -2,6 +2,7 @@
 #define SYMBOL_H
 #include <iostream>
 #include "gpl_type.h"
+#include "game_object.h"
 using namespace std;
 
 class V {
@@ -13,8 +14,8 @@ public:
  int* ia;
  string* sa;
  double* da;
- V(int x) { i =x;}
- V(string x) {s =x;}
+ V(int x) { i = x;}
+ V(string x) {s = x;}
  V(double x) {d = x;}
  V(Gpl_type array_type, int size) 
  {
@@ -43,6 +44,9 @@ public:
 class Symbol
 {
 	public:
+		Symbol(Game_object *go);
+		Symbol(){};
+		void set(int x);
 		void print_symbol();
 		string get_name();
 		Gpl_type get_type();
@@ -50,8 +54,13 @@ class Symbol
 		string name;
 		Gpl_type type;
 		V* value;
-
+		Game_object* get_game_object_value(); 
+		bool is_game_object();
+		int get_int_value();
+		double get_double_value();
+		string get_string_value();
 	private:
+		Game_object* g;
 		
 };
 
