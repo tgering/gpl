@@ -25,3 +25,8 @@ double Variable::get_double_value(){
 	V *v = m_symbol->get_value();
 	return v->d;
 }
+
+Animation_block* Variable::get_animation_block_value(){
+	Animation_block *a = m_symbol->get_animation_block_value();
+	return a;
+}

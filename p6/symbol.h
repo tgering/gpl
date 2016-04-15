@@ -1,8 +1,15 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 #include <iostream>
+#include <vector>
 #include "gpl_type.h"
 #include "game_object.h"
+#include "circle.h"
+#include "triangle.h"
+#include "rectangle.h"
+#include "pixmap.h"
+#include "textbox.h"
+
 using namespace std;
 
 class V {
@@ -14,6 +21,7 @@ public:
  int* ia;
  string* sa;
  double* da;
+ vector<Game_object*> ga;
  V(int x) { i = x;}
  V(string x) {s = x;}
  V(double x) {d = x;}
@@ -22,20 +30,51 @@ public:
  	length = size;
  	if(array_type == INT_ARRAY){
  		ia = new int[size];
- 		for(int i = 0; i < size; i++){
- 			ia[i] = 0;
+ 		for(int y = 0; y < size; y++){
+ 			ia[y] = 0;
  		}
  	}
  	else if(array_type == STRING_ARRAY){
  		sa = new string[size];
- 		for(int i = 0; i < size; i++){
- 			sa[i] = "";
+ 		for(int y = 0; y < size; y++){
+ 			sa[y] = "";
  		}
  	}
  	else if(array_type == DOUBLE_ARRAY){
  		da = new double[size];
- 		for(int i = 0; i < size; i++){
- 			da[i] = 0.0;
+ 		for(int y = 0; y < size; y++){
+ 			da[y] = 0.0;
+ 		}
+ 	}
+ 	else if(array_type == CIRCLE){
+ 		//ga = new Circle[size];
+ 		for(int y = 0; y < size; y++){
+ 			//ga[y] = Circle();
+ 		}
+ 	}
+ 	else if(array_type == TRIANGLE){
+ 		//ga = new Triangle[size];
+ 		for(int y = 0; y < size; y++){
+ 			//ga[y] = Triangle();
+ 		}
+ 	}
+ 	else if(array_type == PIXMAP){
+ 		//ga = new Pixmap[size];
+ 		for(int y = 0; y < size; y++){
+ 			//ga[i] = Pixmap();
+ 		}
+ 	}
+ 	else if(array_type == RECTANGLE){
+ 	
+ 		for(int y = 0; y < size; y++){
+ 			 ga.push_back(new Rectangle());
+ 		}
+ 	}
+ 	
+ 	else if(array_type == TEXTBOX){
+ 		//ga = new Textbox[size];
+ 		for(int y = 0; y < size; y++){
+ 			//ga[i] = Textbox();
  		}
  	}
  }
@@ -45,6 +84,7 @@ class Symbol
 {
 	public:
 		Symbol(Game_object *go);
+		Symbol(Animation_block *block);
 		Symbol(){};
 		void set(int x);
 		void print_symbol();
@@ -54,14 +94,16 @@ class Symbol
 		string name;
 		Gpl_type type;
 		V* value;
-		Game_object* get_game_object_value(); 
+		Game_object* get_game_object_value();
+		bool is_animation_block();
+		Animation_block* get_animation_block_value();
 		bool is_game_object();
 		int get_int_value();
 		double get_double_value();
 		string get_string_value();
 	private:
-		Game_object* g;
-		
+		Game_object *g;
+		Animation_block *a;
 };
 
 #endif

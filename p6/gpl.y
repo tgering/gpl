@@ -48,6 +48,7 @@ extern int line_count;            // current line in the input; from record.l
 using namespace std;
 
 Game_object *cur_object_under_construction;
+string cur_object_name;
 // bison syntax to indicate the end of the header
 %} 
 
@@ -80,6 +81,7 @@ Game_object *cur_object_under_construction;
   #include "circle.h"
   #include "textbox.h"
   #include "pixmap.h"
+  #include "animation_block.h"
   #include <sstream>
 }
 
@@ -395,18 +397,23 @@ object_declaration:
         switch($1){
             case TRIANGLE:
                 cur_object_under_construction = new Triangle();
+                cur_object_name = *($2);
                 break;
             case PIXMAP:
                 cur_object_under_construction = new Pixmap();
+                cur_object_name = *($2);
                 break;
             case CIRCLE:
                 cur_object_under_construction = new Circle();
+                cur_object_name = *($2);
                 break;
             case RECTANGLE:
                 cur_object_under_construction = new Rectangle();
+                cur_object_name = *($2);
                 break;
             case TEXTBOX:
                 cur_object_under_construction = new Textbox();
+                cur_object_name = *($2);
                 break;
             default:
                 break;
@@ -414,12 +421,31 @@ object_declaration:
     } 
     T_LPAREN parameter_list_or_empty T_RPAREN
     {
-        Symbol *s = new Symbol(cur_object_under_construction);
-        s->type = GAME_OBJECT;
-        s->name = *($2);
-        my_table->insert(*($2),s);
+        Symbol *s = my_table->lookup(*($2));
+        if(s==NULL){
+            s = new Symbol(cur_object_under_construction);
+            s->type = GAME_OBJECT;
+            s->name = *($2);
+            my_table->insert(*($2),s);
+        }
+        else{
+            Error::error(Error::PREVIOUSLY_DECLARED_VARIABLE, *($2));
+        }
     }
     | object_type T_ID T_LBRACKET expression T_RBRACKET
+    { 
+       Symbol *s = my_table->lookup(*($2));
+        if(s==NULL){
+            s = new Symbol();
+            s->type = GAME_OBJECT_ARRAY;
+            s->name = *($2);
+            s->value = new V(Gpl_type($1), int($4->eval_int()));
+            my_table->insert(*($2),s);
+       }
+       else{
+            Error::error(Error::PREVIOUSLY_DECLARED_VARIABLE, *($2));
+       }
+    }
     ;
 
 //---------------------------------------------------------------------
@@ -446,6 +472,26 @@ parameter_list :
 //---------------------------------------------------------------------
 parameter:
     T_ID T_ASSIGN expression
+    {
+        Status status = OK;
+        Gpl_type t = $3->get_type();
+        if(t == STRING){
+            status = cur_object_under_construction->set_member_variable(*($1), $3->eval_string());
+        }
+        else if(t == INT){
+            status = cur_object_under_construction->set_member_variable(*($1), $3->eval_int());
+        }
+        else if(t == DOUBLE){
+            status = cur_object_under_construction->set_member_variable(*($1), $3->eval_double());
+        }
+        if(status == MEMBER_NOT_OF_GIVEN_TYPE){
+            Error::error(Error::INCORRECT_CONSTRUCTOR_PARAMETER_TYPE, cur_object_name);
+        }
+        else if(status == MEMBER_NOT_DECLARED){
+            Error::error(Error::UNKNOWN_CONSTRUCTOR_PARAMETER, cur_object_name);
+        }
+        
+    }
     ;
 
 //---------------------------------------------------------------------
@@ -474,6 +520,19 @@ initialization_block:
 //---------------------------------------------------------------------
 animation_block:
     T_ANIMATION T_ID T_LPAREN check_animation_parameter T_RPAREN T_LBRACE { } statement_list T_RBRACE end_of_statement_block
+    {
+       Symbol *s = my_table->lookup(*($2));
+       if(s== NULL){
+            Animation_block *block = new Animation_block;
+            s = new Symbol(block);
+            s->type = ANIMATION_BLOCK;
+            s->name = *($2);
+            my_table->insert(*($2),s);
+       }
+       else{
+            Error::error(Error::PREVIOUSLY_DECLARED_VARIABLE,*($2));
+       }
+    }
     ;
 
 //---------------------------------------------------------------------
@@ -484,10 +543,55 @@ animation_parameter:
 //---------------------------------------------------------------------
 check_animation_parameter:
     T_TRIANGLE T_ID
+    {
+        Triangle *t = new Triangle();
+        t->never_animate();
+        t->never_draw();
+        Symbol *s = new Symbol(t);
+        s->name = *($2);
+        s->type = GAME_OBJECT;
+        my_table->insert(*($2), s);
+    }
     | T_PIXMAP T_ID
+    {
+        Pixmap *p = new Pixmap();
+        p->never_animate();
+        p->never_draw();
+        Symbol *s = new Symbol(p);
+        s->type = GAME_OBJECT;
+        s->name = *($2);
+        my_table->insert(*($2), s);
+    }
     | T_CIRCLE T_ID
+    {
+        Circle *c = new Circle();
+        c->never_animate();
+        c->never_draw();
+        Symbol *s = new Symbol(c);
+        s->type = GAME_OBJECT;
+        s->name = *($2);
+        my_table->insert(*($2), s);
+    }
     | T_RECTANGLE T_ID
+    {
+        Rectangle *r = new Rectangle();
+        r->never_animate();
+        r->never_draw();
+        Symbol *s = new Symbol(r);
+        s->type = GAME_OBJECT;
+        s->name = *($2);
+        my_table->insert(*($2), s);
+    }
     | T_TEXTBOX T_ID
+    {
+        Textbox *t = new Textbox();
+        t->never_animate();
+        t->never_draw();
+        Symbol *s = new Symbol(t);
+        s->type = GAME_OBJECT;
+        s->name = *($2);
+        my_table->insert(*($2), s);
+    }
     ;
 
 //---------------------------------------------------------------------

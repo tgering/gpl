@@ -2,6 +2,7 @@
 #define EXPRESSION_H
 
 #include "gpl_type.h"
+#include "Animation_block.EXPRESSION_H"
 #include <iostream>
 using namespace std;
 
@@ -19,6 +20,7 @@ class Expression{
 		int eval_int();
 		double eval_double();
 		string eval_string();
+		Animation_block* eval_animation_block();
 
 	private:
 		Expression *m_lhs;

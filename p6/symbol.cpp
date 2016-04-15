@@ -1,7 +1,12 @@
 #include "symbol.h"
+#include <sstream>
 
 Symbol::Symbol(Game_object *go){
 	g = go;
+}
+
+Symbol::Symbol(Animation_block *block){
+	a = block;
 }
 
 void Symbol::print_symbol(){
@@ -9,18 +14,18 @@ void Symbol::print_symbol(){
 		cout <<  gpl_type_to_string(type) << " " << name << " = \"" << value->s << "\"" << endl;
 	}
 	else if (type == INT_ARRAY){
-		for(int i = 0; i < value->length; i++){
-			cout << gpl_type_to_base_string(type) << " " << name << "[" << i << "] = " << value->ia[i] << endl;
+		for(int y = 0; y < value->length; y++){
+			cout << gpl_type_to_base_string(type) << " " << name << "[" << y << "] = " << value->ia[y] << endl;
 		}
 	}
 	else if (type == DOUBLE_ARRAY){
-		for(int i = 0; i < value->length; i++){
-			cout << gpl_type_to_base_string(type) << " " << name << "[" << i << "] = " << value->da[i] << endl;
+		for(int y = 0; y < value->length; y++){
+			cout << gpl_type_to_base_string(type) << " " << name << "[" << y << "] = " << value->da[y] << endl;
 		}
 	}
 	else if (type == STRING_ARRAY){
-		for(int i = 0; i < value->length; i++){
-			cout << gpl_type_to_base_string(type) << " " << name << "[" << i << "] = \"" << value->sa[i] << "\"" << endl;
+		for(int y = 0; y < value->length; y++){
+			cout << gpl_type_to_base_string(type) << " " << name << "[" << y << "] = \"" << value->sa[y] << "\"" << endl;
 		}
 	}
 	else if (type == INT){
@@ -32,7 +37,13 @@ void Symbol::print_symbol(){
 	else if (type == GAME_OBJECT){
 		g->print(name, cout);
 	}
-	
+	else if(type == GAME_OBJECT_ARRAY){
+		for(int y = 0; y < value->length; y++){
+			stringstream ss;
+			ss << name << "[" << y << "]";
+			value->ga[y]->print(ss.str() , cout);
+		}
+	}
 }
 
 string Symbol::get_name(){
@@ -72,6 +83,17 @@ string Symbol::get_string_value(){
 
 void Symbol::set(int x){
 	value->i = x;
+}
+
+bool Symbol::is_animation_block(){
+	if(type == ANIMATION_BLOCK){
+		return true;
+	}
+	return false;
+}
+
+Animation_block* Symbol::get_animation_block_value(){
+	return a;
 }
 
 
