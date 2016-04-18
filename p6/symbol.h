@@ -49,19 +49,19 @@ public:
  	else if(array_type == CIRCLE){
  		//ga = new Circle[size];
  		for(int y = 0; y < size; y++){
- 			//ga[y] = Circle();
+ 			ga.push_back(new Circle());
  		}
  	}
  	else if(array_type == TRIANGLE){
  		//ga = new Triangle[size];
  		for(int y = 0; y < size; y++){
- 			//ga[y] = Triangle();
+ 			ga.push_back(new Triangle());
  		}
  	}
  	else if(array_type == PIXMAP){
  		//ga = new Pixmap[size];
  		for(int y = 0; y < size; y++){
- 			//ga[i] = Pixmap();
+ 			ga.push_back(new Pixmap());
  		}
  	}
  	else if(array_type == RECTANGLE){
@@ -74,7 +74,7 @@ public:
  	else if(array_type == TEXTBOX){
  		//ga = new Textbox[size];
  		for(int y = 0; y < size; y++){
- 			//ga[i] = Textbox();
+ 			ga.push_back(new Textbox());
  		}
  	}
  }

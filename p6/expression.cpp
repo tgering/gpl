@@ -314,7 +314,7 @@ string Expression::eval_string(){
 }
 
 Animation_block* Expression::eval_animation_block(){
-	m_variable->get_animation_block_value();
+	return m_variable->get_animation_block_value();
 }
 
 

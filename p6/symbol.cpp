@@ -44,6 +44,9 @@ void Symbol::print_symbol(){
 			value->ga[y]->print(ss.str() , cout);
 		}
 	}
+	else if(type == ANIMATION_BLOCK){
+		cout << "animation_block " << name << endl;
+	}
 }
 
 string Symbol::get_name(){

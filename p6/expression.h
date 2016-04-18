@@ -2,7 +2,7 @@
 #define EXPRESSION_H
 
 #include "gpl_type.h"
-#include "Animation_block.EXPRESSION_H"
+#include "animation_block.h"
 #include <iostream>
 using namespace std;
 
