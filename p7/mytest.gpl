@@ -1,0 +1,12 @@
+int v[3];
+on space
+{
+	print("HEY");
+	v[0] = 1;
+	v[1] = 2;
+	v[2] = 3;
+	print(v[0]);
+	print(v[1]);
+	print(v[2]);
+	exit(1);
+}
