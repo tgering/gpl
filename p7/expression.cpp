@@ -128,12 +128,7 @@ int Expression::eval_int(){
 		return m_int;
 	}
 	else if(m_kind == VARIABLE){
-		if(m_variable->get_type() == INT_ARRAY){
-			return m_variable->get_int_array_value();
-		}
-		else{
-			return m_variable->get_int_value();
-		}
+		return m_variable->get_int_value();
 	}
 	else{
 		assert(m_type == INT);
@@ -253,7 +248,7 @@ double Expression::eval_double(){
 		return m_double;
 	}
 	else if(m_kind == VARIABLE){
-		return m_variable->get_double_value();
+			return m_variable->get_double_value();
 	}
 	else{
 		assert(m_type == DOUBLE);
@@ -307,7 +302,7 @@ string Expression::eval_string(){
 		return m_string;
 	}
 	else if(m_kind == VARIABLE){
-		return m_variable->get_string_value();
+			return m_variable->get_string_value();
 	}
 	else{
 		switch(m_oper){

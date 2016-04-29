@@ -4,104 +4,171 @@
 Variable::Variable(Expression *e, Symbol *s){
 	m_expression = e;
 	m_symbol = s;
-	m_symbol2 = NULL;
+	//m_s= NULL;
 }
 
-Variable::Variable(Symbol *s1, Symbol *s2){
+Variable::Variable(Symbol *s1, string  s){
 	m_expression = NULL;
 	m_symbol = s1;
-	m_symbol2 = s2;
+	m_s = s;
 }
 
-Variable::Variable(Symbol *s1, Expression *e, Symbol *s2){
+Variable::Variable(Symbol *s1, Expression *e, string s){
 	m_expression = e;
 	m_symbol = s1;
-	m_symbol2 = s2;
+	m_s = s;
 }
 
 Gpl_type Variable::get_type(){
-	if(m_symbol2 == NULL){
-		return m_symbol->get_type();
+	Gpl_type t;
+	if(m_symbol->get_type()==GAME_OBJECT){
+		Game_object* g = m_symbol->get_game_object_value();
+		g->get_member_variable_type(m_s,t);
+		return t;
+	}
+	else if(m_symbol->get_type() == GAME_OBJECT_ARRAY){
+		Game_object* g = m_symbol->value->ga[m_expression->eval_int()];
+		g->get_member_variable_type(m_s,t);
+		return t;
 	}
 	else{
-		return m_symbol2->get_type();
+		return m_symbol->get_type();
 	}
 }
 
 int Variable::get_int_value(){
-	if(m_symbol2 == NULL){
+	Gpl_type t = m_symbol->get_type();
+	if(t == INT){
 		V *v = m_symbol->get_value();
 		return v->i;
 	}
-	else{
-		V *v = m_symbol2->get_value();
-		return v->i;
+	else if(t == INT_ARRAY){
+		V *v = m_symbol->get_value();
+		return v->ia[m_expression->eval_int()];		
+	}
+	else if(t == GAME_OBJECT){
+		int i;
+		Game_object *g = m_symbol->get_game_object_value();
+		g->get_member_variable(m_s,i);
+		return i;
+	}
+	else if(t == GAME_OBJECT_ARRAY){
+		int i;
+		Game_object *g = m_symbol->value->ga[m_expression->eval_int()];
+		g->get_member_variable(m_s,i);
+		return i;
 	}
 }
 
 void Variable::set_int_value(int i){
-	if(m_symbol2 == NULL){
+	Gpl_type t = m_symbol->get_type();
+	if(t == INT){
 		V *v = m_symbol->get_value();
 		v->i = i;
 	}
-	else{
-		V *v = m_symbol2->get_value();
-		v->i = i;
+	else if(t == INT_ARRAY){
+		V *v = m_symbol->get_value();
+		v->ia[m_expression->eval_int()] = i;		
 	}
+	else if(t == GAME_OBJECT){
+		Game_object *g = m_symbol->get_game_object_value();
+		g->set_member_variable(m_s,i);
+	}
+	else if(t == GAME_OBJECT_ARRAY){
+		Game_object *g = m_symbol->value->ga[m_expression->eval_int()];
+		g->set_member_variable(m_s,i);
+	}
+}
 
-}
-int Variable::get_int_array_value(){
-	V *v = m_symbol->get_value();
-	return v->ia[m_expression->eval_int()];
-}
-
-void Variable::set_int_array_value(int i){
-	V *v = m_symbol->get_value();
-	v->ia[m_expression->eval_int()] = i;
-}
 
 string Variable::get_string_value(){
-	if(m_symbol2 == NULL){
+	Gpl_type t = m_symbol->get_type();
+	if(t == STRING){
 		V *v = m_symbol->get_value();
 		return v->s;
 	}
-	else{
-		V *v = m_symbol2->get_value();
-		return v->s;
+	else if(t == STRING_ARRAY){
+		V *v = m_symbol->get_value();
+		return v->sa[m_expression->eval_int()];		
+	}
+	else if(t == GAME_OBJECT){
+		string i;
+		Game_object *g = m_symbol->get_game_object_value();
+		g->get_member_variable(m_s,i);
+		return i;
+	}
+	else if(t == GAME_OBJECT_ARRAY){
+		string i;
+		Game_object *g = m_symbol->value->ga[m_expression->eval_int()];
+		g->get_member_variable(m_s,i);
+		return i;
 	}
 }
 
 void Variable::set_string_value(string s){
-	if(m_symbol2 == NULL){
+	Gpl_type t = m_symbol->get_type();
+	if(t == STRING){
 		V *v = m_symbol->get_value();
 		v->s = s;
 	}
-	else{
-		V *v = m_symbol2->get_value();
-		v->s = s;
+	else if(t == STRING_ARRAY){
+		V *v = m_symbol->get_value();
+		v->sa[m_expression->eval_int()] = s;		
+	}
+	else if(t == GAME_OBJECT){
+		Game_object *g = m_symbol->get_game_object_value();
+		g->set_member_variable(m_s,s);
+	}
+	else if(t == GAME_OBJECT_ARRAY){
+		Game_object *g = m_symbol->value->ga[m_expression->eval_int()];
+		g->set_member_variable(m_s,s);
 	}
 }
+
 
 double Variable::get_double_value(){
-	if(m_symbol2 == NULL){
+	Gpl_type t = m_symbol->get_type();
+	if(t == DOUBLE){
 		V *v = m_symbol->get_value();
 		return v->d;
 	}
-	else{
-		V *v = m_symbol2->get_value();
-		return v->d;
+	else if(t == DOUBLE_ARRAY){
+		V *v = m_symbol->get_value();
+		return v->da[m_expression->eval_int()];		
+	}
+	else if(t == GAME_OBJECT){
+		double i;
+		Game_object *g = m_symbol->get_game_object_value();
+		g->get_member_variable(m_s,i);
+		return i;
+	}
+	else if(t == GAME_OBJECT_ARRAY){
+		double i;
+		Game_object *g = m_symbol->value->ga[m_expression->eval_int()];
+		g->get_member_variable(m_s,i);
+		return i;
 	}
 }
 
+
 void Variable::set_double_value(double d){
-	if(m_symbol2 == NULL){
+	Gpl_type t = m_symbol->get_type();
+	if(t == DOUBLE){
 		V *v = m_symbol->get_value();
 		v->d = d;
 	}
-	else{
-		V *v = m_symbol2->get_value();
-		v->d = d;
-	}	
+	else if(t == DOUBLE_ARRAY){
+		V *v = m_symbol->get_value();
+		v->da[m_expression->eval_int()] = d;		
+	}
+	else if(t == GAME_OBJECT){
+		Game_object *g = m_symbol->get_game_object_value();
+		g->set_member_variable(m_s,d);
+	}
+	else if(t == GAME_OBJECT_ARRAY){
+		Game_object *g = m_symbol->value->ga[m_expression->eval_int()];
+		g->set_member_variable(m_s,d);
+	}
 }
 
 Animation_block* Variable::get_animation_block_value(){

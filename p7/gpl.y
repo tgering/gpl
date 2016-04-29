@@ -78,6 +78,7 @@ Event_manager *my_event_manager = Event_manager::instance();
 
 %code requires 
 {
+  #include "for_statement.h"
   #include "assign_statement.h"
   #include "if_statement.h"
   #include "print_statement.h"
@@ -918,6 +919,10 @@ if_statement:
 //---------------------------------------------------------------------
 for_statement:
     T_FOR T_LPAREN statement_block_creator assign_statement end_of_statement_block T_SEMIC expression T_SEMIC statement_block_creator assign_statement end_of_statement_block T_RPAREN statement_block
+    {
+        Statement *s = new For_statement($5,$11,$13,$7);
+        my_block_stack.top()->push_statement(s);
+    }
     ;
 
 //---------------------------------------------------------------------
@@ -1020,15 +1025,11 @@ variable:
             if(g!=NULL){
                 Status status = g->get_member_variable_type(*$3,type);
                 if(status == OK){
-                    Symbol *s2 = new Symbol();
-                    s2->name = *($3);
-                    s2->type = type;
                     if(type == INT){
                         int i;
                         Status stat = g->get_member_variable(*$3, i);
                         if(stat == OK){
-                            s2->value = new V(i);
-                            $$ = new Variable(s, s2);
+                            $$ = new Variable(s, *$3);
                         }
                         else if(stat == MEMBER_NOT_DECLARED){
                             Error::error(Error::UNDECLARED_MEMBER, *$1, *$3);
@@ -1043,8 +1044,7 @@ variable:
                         string st;
                         Status stat = g->get_member_variable(*$3, st);
                         if(stat == OK){
-                            s2->value = new V(st);
-                            $$ = new Variable(s, s2);
+                            $$ = new Variable(s, *$3);
                         }
                         else if(stat == MEMBER_NOT_DECLARED){
                             Error::error(Error::UNDECLARED_MEMBER, *$1, *$3);
@@ -1059,8 +1059,7 @@ variable:
                         double d;
                         Status stat = g->get_member_variable(*$3, d);
                         if(stat == OK){
-                            s2->value = new V(d);
-                            $$ = new Variable(s, s2);
+                            $$ = new Variable(s, *$3);
                         }
                         else if(stat == MEMBER_NOT_DECLARED){
                             Error::error(Error::UNDECLARED_MEMBER, *$1, *$3);
@@ -1112,15 +1111,11 @@ variable:
                     if(g != NULL){
                         Status status = g->get_member_variable_type(*$6,type);
                         if(status == OK){
-                            Symbol *s2 = new Symbol();
-                            s2->name = *($6);
-                            s2->type = type;
                             if(type == INT){
                                 int i;
                                 Status stat = g->get_member_variable(*$6, i);
                                 if(stat == OK){
-                                    s2->value = new V(i);
-                                    $$ = new Variable(s, $3, s2);
+                                    $$ = new Variable(s, $3, *$6);
                                 }
                                 else if(stat == MEMBER_NOT_DECLARED){
                                     Error::error(Error::UNKNOWN_CONSTRUCTOR_PARAMETER, *$6);
@@ -1135,8 +1130,7 @@ variable:
                                 string st;
                                 Status stat = g->get_member_variable(*$6, st);
                                 if(stat == OK){
-                                    s2->value = new V(st);
-                                    $$ = new Variable(s, $3, s2);
+                                    $$ = new Variable(s, $3, *$6);
                                 }
                                 else if(stat == MEMBER_NOT_DECLARED){
                                     Error::error(Error::UNKNOWN_CONSTRUCTOR_PARAMETER, *$6);
@@ -1151,8 +1145,7 @@ variable:
                                 double d;
                                 Status stat = g->get_member_variable(*$6, d);
                                 if(stat == OK){
-                                    s2->value = new V(d);
-                                    $$ = new Variable(s, $3, s2);
+                                    $$ = new Variable(s, $3, *$6);
                                 }
                                 else if(stat == MEMBER_NOT_DECLARED){
                                     Error::error(Error::UNKNOWN_CONSTRUCTOR_PARAMETER, *$6);

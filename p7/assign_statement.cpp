@@ -19,7 +19,13 @@ void Assign_statement::execute(){
 			m_v->set_double_value(m_e->eval_double());
 		}
 		else if(m_v->get_type() == INT_ARRAY){
-			m_v->set_int_array_value(m_e->eval_int());
+			m_v->set_int_value(m_e->eval_int());
+		}
+		else if(m_v->get_type() == DOUBLE_ARRAY){
+			m_v->set_double_value(m_e->eval_double());
+		}
+		else if(m_v->get_type() == STRING_ARRAY){
+			m_v->set_string_value(m_e->eval_string());
 		}
 	}
 	else if(m_op == PLUS_EQUAL){
@@ -33,7 +39,13 @@ void Assign_statement::execute(){
 			m_v->set_double_value(m_v->get_double_value() + m_e->eval_double());
 		}
 		else if(m_v->get_type() == INT_ARRAY){
-			
+			m_v->set_int_value(m_v->get_int_value() + m_e->eval_int());
+		}
+		else if(m_v->get_type() == DOUBLE_ARRAY){
+			m_v->set_double_value(m_v->get_double_value() + m_e->eval_double());
+		}
+		else if(m_v->get_type() == STRING_ARRAY){
+			m_v->set_string_value(m_v->get_string_value() + m_e->eval_string());
 		}
 
 	}
@@ -44,9 +56,13 @@ void Assign_statement::execute(){
 		else if(m_v->get_type() == DOUBLE){
 			m_v->set_double_value(m_v->get_double_value() - m_e->eval_double());
 		}
-		else if(m_v->get_type() == ARRAY){
-			
+		else if(m_v->get_type() == INT_ARRAY){
+			m_v->set_int_value(m_v->get_int_value() - m_e->eval_int());
 		}
+		else if(m_v->get_type() == DOUBLE_ARRAY){
+			m_v->set_double_value(m_v->get_double_value() - m_e->eval_double());
+		}
+
 
 	}
 }
