@@ -26,6 +26,8 @@ class Variable{
 		//void set_double_array_value(double d);
 		void set_double_value(double d);
 		Animation_block* get_animation_block_value();
+		string get_symbol_name();
+		Symbol* get_symbol_value(){return m_symbol;}
 	private:
 		Expression *m_expression;
 		Symbol *m_symbol;

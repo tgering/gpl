@@ -242,7 +242,8 @@ Event_manager *my_event_manager = Event_manager::instance();
 %type <union_statement_block> statement_block
 %type <union_statement_block> if_block
 %type <union_int> keystroke
-
+%type <union_statement_block> assign_statement
+%type <union_statement_block> print_statement
 
 %nonassoc UNARY_OPS
 
@@ -560,7 +561,7 @@ parameter:
 forward_declaration:
     T_FORWARD T_ANIMATION T_ID T_LPAREN animation_parameter T_RPAREN
     {
-        Symbol *s = my_table->lookup(*($3));
+       Symbol *s = my_table->lookup(*($3));
        if(s== NULL){
             Animation_block *block = new Animation_block;
             s = new Symbol(block);
@@ -595,22 +596,19 @@ initialization_block:
 
 //---------------------------------------------------------------------
 animation_block:
-    T_ANIMATION T_ID T_LPAREN check_animation_parameter T_RPAREN T_LBRACE { } statement_list T_RBRACE end_of_statement_block
+    T_ANIMATION T_ID T_LPAREN check_animation_parameter 
+    { /*
+        Animation_block *a = my_table->lookup(*$2);
+        if(a != NULL){
+            my_block_stack.push(a);
+        }
+        else{
+            //REMIND - error
+        } */
+    } 
+    T_RPAREN T_LBRACE statement_list T_RBRACE end_of_statement_block
     {
-    /*
-       Symbol *s = my_table->lookup(*($2));
-       if(s== NULL){
-            Animation_block *block = new Animation_block;
-            s = new Symbol(block);
-            s->type = ANIMATION_BLOCK;
-            s->name = *($2);
-            cout << "ANIMATION INSERT\n";
-            my_table->insert(*($2),s);
-       }
-       else{
-            Error::error(Error::PREVIOUSLY_DECLARED_VARIABLE,*($2));
-       }
-    */
+
     }
     ;
 
@@ -906,13 +904,23 @@ statement:
 if_statement:
     T_IF T_LPAREN expression T_RPAREN if_block %prec IF_NO_ELSE
     {
-        Statement *s = new If_statement($5,NULL,$3);
-        my_block_stack.top()->push_statement(s);
+        if($3->get_type() != INT){
+            Error::error(Error::INVALID_TYPE_FOR_IF_STMT_EXPRESSION);
+        }
+        else{
+            Statement *s = new If_statement($5,NULL,$3);
+            my_block_stack.top()->push_statement(s);
+        }
     }
     | T_IF T_LPAREN expression T_RPAREN if_block T_ELSE if_block
     {
-        Statement *s = new If_statement($5,$7,$3);
-        my_block_stack.top()->push_statement(s);
+        if($3->get_type() != INT){
+            Error::error(Error::INVALID_TYPE_FOR_IF_STMT_EXPRESSION);
+        }
+        else{
+            Statement *s = new If_statement($5,$7,$3);
+            my_block_stack.top()->push_statement(s);
+        }
     }
     ;
 
@@ -920,8 +928,13 @@ if_statement:
 for_statement:
     T_FOR T_LPAREN statement_block_creator assign_statement end_of_statement_block T_SEMIC expression T_SEMIC statement_block_creator assign_statement end_of_statement_block T_RPAREN statement_block
     {
-        Statement *s = new For_statement($5,$11,$13,$7);
-        my_block_stack.top()->push_statement(s);
+        if($7->get_type() !=INT){
+            Error::error(Error::INVALID_TYPE_FOR_FOR_STMT_EXPRESSION);
+        }
+        else{
+            Statement *s = new For_statement($5,$11,$13,$7);
+            my_block_stack.top()->push_statement(s);
+        }
     }
     ;
 
@@ -929,8 +942,19 @@ for_statement:
 print_statement:
     T_PRINT T_LPAREN expression T_RPAREN
     {
-        Statement *s = new Print_Statement((Expression*)$3,$1);
-        my_block_stack.top()->push_statement(s);
+        if($3 == NULL){
+            $$ = NULL;
+        }
+        else{
+            Gpl_type t = $3->get_type();
+            if(t != INT && t != DOUBLE && t != STRING){
+                Error::error(Error::INVALID_TYPE_FOR_PRINT_STMT_EXPRESSION);
+            }
+            else{
+                Statement *s = new Print_Statement((Expression*)$3,$1);
+                my_block_stack.top()->push_statement(s);
+            }
+        }
     }
     ;
 
@@ -938,28 +962,108 @@ print_statement:
 exit_statement:
     T_EXIT T_LPAREN expression T_RPAREN
     {
-        Statement *s = new Exit_statement((Expression*)$3, $1);
-        my_block_stack.top()->push_statement(s);
+        if($3->get_type() != INT){
+            Error::error(Error::EXIT_STATUS_MUST_BE_AN_INTEGER, gpl_type_to_string($3->get_type()));
+        }
+        else{
+            Statement *s = new Exit_statement((Expression*)$3, $1);
+            my_block_stack.top()->push_statement(s);
+        }
     }
     ;
 
 //---------------------------------------------------------------------
 assign_statement:
-    variable T_ASSIGN expression
-    {
-        Statement *s = new Assign_statement((Variable*)$1,(Expression*)$3,Assign_statement::EQUAL);
-        my_block_stack.top()->push_statement(s);
-    }
+        variable T_ASSIGN expression 
+        {
+            if ($1 == NULL || $3 == NULL) {
+                $$ = NULL;
+            }  
+            else{
+                Gpl_type et = $3->get_type();
+                Gpl_type vt = $1->get_type();
+                if (((vt == INT || vt == INT_ARRAY) && et == INT)
+                    || ((vt == DOUBLE || vt == DOUBLE_ARRAY) && (et ==INT || et == DOUBLE))
+                    || (vt == STRING || vt == STRING_ARRAY) && (et == INT || et == DOUBLE || et == STRING )) {
+                    Statement *s = new Assign_statement((Variable *) $1, (Expression *) $3, Assign_statement::EQUAL);
+                    my_block_stack.top()->push_statement(s);
+                    $$ = my_block_stack.top();
+                } 
+                else {
+                    if (vt == INT || vt== DOUBLE || vt==STRING || vt==INT_ARRAY || vt == STRING_ARRAY || vt == DOUBLE_ARRAY){
+                    Error::error(Error::ASSIGNMENT_TYPE_ERROR, gpl_type_to_string(vt), gpl_type_to_string(et));
+                    } 
+                    else {
+                        if ($1->get_symbol_value()->get_type() == GAME_OBJECT) {
+                            Error::error(Error::INVALID_LHS_OF_ASSIGNMENT, $1->get_symbol_name(), $1->get_symbol_value()->get_game_object_value()->type());
+                        } 
+                        else {
+                            Error::error(Error::INVALID_LHS_OF_ASSIGNMENT, $1->get_symbol_name(), gpl_type_to_string(vt));
+                        }
+                    }
+                }
+            }
+        }
+
     | variable T_PLUS_ASSIGN expression
     {
-        Statement *s = new Assign_statement((Variable*)$1,(Expression*)$3,Assign_statement::PLUS_EQUAL);
-        my_block_stack.top()->push_statement(s);
+        if ($1 == NULL || $3 == NULL) {
+                $$ = NULL;
+        }  
+        else{
+            Gpl_type et = $3->get_type();
+            Gpl_type vt = $1->get_type();
+            if (((vt == INT || vt == INT_ARRAY) && et == INT)
+                || ((vt == DOUBLE || vt == DOUBLE_ARRAY) && (et ==INT || et == DOUBLE))
+                || (vt == STRING || vt == STRING_ARRAY) && (et == INT || et == DOUBLE || et == STRING )) {
+                Statement *s = new Assign_statement((Variable *) $1, (Expression *) $3, Assign_statement::PLUS_EQUAL);
+                my_block_stack.top()->push_statement(s);
+                $$ = my_block_stack.top();
+            } 
+            else {
+                if (vt == INT || vt== DOUBLE || vt==STRING || vt==INT_ARRAY || vt == STRING_ARRAY || vt == DOUBLE_ARRAY){
+                Error::error(Error::PLUS_ASSIGNMENT_TYPE_ERROR, gpl_type_to_string(vt), gpl_type_to_string(et));
+                } 
+                else {
+                    if ($1->get_symbol_value()->get_type() == GAME_OBJECT) {
+                        Error::error(Error::INVALID_LHS_OF_PLUS_ASSIGNMENT, $1->get_symbol_name(), $1->get_symbol_value()->get_game_object_value()->type());
+                    } 
+                    else {
+                        Error::error(Error::INVALID_LHS_OF_PLUS_ASSIGNMENT, $1->get_symbol_name(), gpl_type_to_string(vt));
+                    }
+                }
+            }
+        }
     }
     | variable T_MINUS_ASSIGN expression
     {
-        Statement *s = new Assign_statement((Variable*)$1,(Expression*)$3,Assign_statement::MINUS_EQUAL);
-        my_block_stack.top()->push_statement(s);
-    }
+        if ($1 == NULL || $3 == NULL) {
+                $$ = NULL;
+        }  
+        else{
+            Gpl_type et = $3->get_type();
+            Gpl_type vt = $1->get_type();
+            if(((vt == INT || vt == INT_ARRAY) && et == INT)
+                || ((vt == DOUBLE || vt == DOUBLE_ARRAY) && (et ==INT || et == DOUBLE))){
+                Statement *s = new Assign_statement((Variable *) $1, (Expression *) $3, Assign_statement::MINUS_EQUAL);
+                my_block_stack.top()->push_statement(s);
+                $$ = my_block_stack.top();
+            } 
+            else{
+                if (vt == INT || vt== DOUBLE || vt==INT_ARRAY || vt == DOUBLE_ARRAY){
+                Error::error(Error::MINUS_ASSIGNMENT_TYPE_ERROR, gpl_type_to_string(vt), gpl_type_to_string(et));
+                } 
+                else {
+                    if ($1->get_symbol_value()->get_type() == GAME_OBJECT) {
+                        Error::error(Error::INVALID_LHS_OF_MINUS_ASSIGNMENT, $1->get_symbol_name(), $1->get_symbol_value()->get_game_object_value()->type());
+                    } 
+                    else {
+                        Error::error(Error::INVALID_LHS_OF_MINUS_ASSIGNMENT, $1->get_symbol_name(), gpl_type_to_string(vt));
+                    }
+                }
+            }
+        }
+    }   
     ;
 
 //---------------------------------------------------------------------
@@ -998,13 +1102,13 @@ variable:
                         $$ = NULL;   
                     }
                     else{
-                        if($3->eval_int() >= s->get_value()->length){
+                       /* if($3->eval_int() >= s->get_value()->length){
                             Error::error(Error::ARRAY_INDEX_OUT_OF_BOUNDS, *$1, $3->eval_string());
                             $$ = NULL;
                         }
-                        else{
+                        else{*/
                             $$ = new Variable($3, s);
-                        }
+                       // } //REMIND - Fixing test 39 p7
                     }
                 }
             }
@@ -1101,17 +1205,17 @@ variable:
         else{
             if($3->get_type() != INT){
                 Error::error(Error::ARRAY_INDEX_MUST_BE_AN_INTEGER,*$1,"A " + gpl_type_to_string($3->get_type())+ " expression");
-                $$ = NULL;
+                //$$ = NULL;
             }
-            else{
+            //else{
                 int index = $3->eval_int();
                 if(s->get_type() == GAME_OBJECT_ARRAY){
-                    Game_object *g = s->value->ga[index];
+                    Game_object *g = s->value->ga[0];
                     Gpl_type type;
                     if(g != NULL){
                         Status status = g->get_member_variable_type(*$6,type);
                         if(status == OK){
-                            if(type == INT){
+                           if(type == INT){
                                 int i;
                                 Status stat = g->get_member_variable(*$6, i);
                                 if(stat == OK){
@@ -1179,7 +1283,7 @@ variable:
                     Error::error(Error::LHS_OF_PERIOD_MUST_BE_OBJECT,*$1);
                     $$ = NULL;
                 }
-            }
+           // }
         }
     }
     ;
@@ -1251,8 +1355,24 @@ expression:
 
     | expression T_PLUS expression 
     {
-        //REMIND - Add error check
-        $$ = new Expression($1, PLUS, $3);
+        bool lhs = false;
+        bool rhs = false;
+        if($1->get_type() == INT || $1->get_type() == DOUBLE || $1->get_type() == STRING ){
+            lhs = true;
+        }
+        if($3->get_type() == INT || $3->get_type() == DOUBLE || $3->get_type() == STRING ){
+            rhs = true;
+        }
+        if(lhs && rhs){
+            $$ = new Expression($1, PLUS, $3);
+        }
+        else{
+            if(!lhs)
+                Error::error(Error::INVALID_LEFT_OPERAND_TYPE,"+");
+            if(!rhs)
+                Error::error(Error::INVALID_RIGHT_OPERAND_TYPE,"+");
+            $$ = NULL;
+        }
     }
 
     | expression T_MINUS expression

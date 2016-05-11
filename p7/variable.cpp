@@ -1,5 +1,6 @@
 #include "expression.h"
 #include "variable.h"
+#include "error.h"
 
 Variable::Variable(Expression *e, Symbol *s){
 	m_expression = e;
@@ -27,7 +28,8 @@ Gpl_type Variable::get_type(){
 		return t;
 	}
 	else if(m_symbol->get_type() == GAME_OBJECT_ARRAY){
-		Game_object* g = m_symbol->value->ga[m_expression->eval_int()];
+		//Game_object* g = m_symbol->value->ga[m_expression->eval_int()];
+		Game_object* g = m_symbol->value->ga[0];
 		g->get_member_variable_type(m_s,t);
 		return t;
 	}
@@ -44,7 +46,13 @@ int Variable::get_int_value(){
 	}
 	else if(t == INT_ARRAY){
 		V *v = m_symbol->get_value();
-		return v->ia[m_expression->eval_int()];		
+		if(m_expression->eval_int() > v->length || m_expression->eval_int() < 0	){
+			Error::error(Error::ARRAY_INDEX_OUT_OF_BOUNDS,m_symbol->name,m_expression->eval_string());
+			return v->ia[0];
+		}
+		else{
+			return v->ia[m_expression->eval_int()];
+		}		
 	}
 	else if(t == GAME_OBJECT){
 		int i;
@@ -68,7 +76,13 @@ void Variable::set_int_value(int i){
 	}
 	else if(t == INT_ARRAY){
 		V *v = m_symbol->get_value();
-		v->ia[m_expression->eval_int()] = i;		
+		if(m_expression->eval_int() > v->length || m_expression->eval_int() < 0){
+			Error::error(Error::ARRAY_INDEX_OUT_OF_BOUNDS,m_symbol->name,m_expression->eval_string());
+			v->ia[0] = i;
+		}
+		else{
+			v->ia[m_expression->eval_int()] = i;
+		}		
 	}
 	else if(t == GAME_OBJECT){
 		Game_object *g = m_symbol->get_game_object_value();
@@ -89,6 +103,13 @@ string Variable::get_string_value(){
 	}
 	else if(t == STRING_ARRAY){
 		V *v = m_symbol->get_value();
+		if(m_expression->eval_int() > v->length || m_expression->eval_int() < 0){
+			Error::error(Error::ARRAY_INDEX_OUT_OF_BOUNDS,m_symbol->name,m_expression->eval_string());
+			return v->sa[0];
+		}
+		else{
+			return v->sa[m_expression->eval_int()];
+		}	
 		return v->sa[m_expression->eval_int()];		
 	}
 	else if(t == GAME_OBJECT){
@@ -113,7 +134,13 @@ void Variable::set_string_value(string s){
 	}
 	else if(t == STRING_ARRAY){
 		V *v = m_symbol->get_value();
-		v->sa[m_expression->eval_int()] = s;		
+		if(m_expression->eval_int() > v->length || m_expression->eval_int() < 0){
+			Error::error(Error::ARRAY_INDEX_OUT_OF_BOUNDS,m_symbol->name,m_expression->eval_string());
+			v->sa[0] = s;
+		}
+		else{
+			v->sa[m_expression->eval_int()] = s;
+		}		
 	}
 	else if(t == GAME_OBJECT){
 		Game_object *g = m_symbol->get_game_object_value();
@@ -134,7 +161,13 @@ double Variable::get_double_value(){
 	}
 	else if(t == DOUBLE_ARRAY){
 		V *v = m_symbol->get_value();
-		return v->da[m_expression->eval_int()];		
+		if(m_expression->eval_int() > v->length || m_expression->eval_int() < 0){
+			Error::error(Error::ARRAY_INDEX_OUT_OF_BOUNDS,m_symbol->name,m_expression->eval_string());
+			return v->da[0];
+		}
+		else{
+			return v->da[m_expression->eval_int()];
+		}	
 	}
 	else if(t == GAME_OBJECT){
 		double i;
@@ -159,7 +192,13 @@ void Variable::set_double_value(double d){
 	}
 	else if(t == DOUBLE_ARRAY){
 		V *v = m_symbol->get_value();
-		v->da[m_expression->eval_int()] = d;		
+		if(m_expression->eval_int() > v->length || m_expression->eval_int() < 0){
+			Error::error(Error::ARRAY_INDEX_OUT_OF_BOUNDS,m_symbol->name,m_expression->eval_string());
+			v->da[0] = d;
+		}
+		else{
+			v->da[m_expression->eval_int()] = d;
+		}			
 	}
 	else if(t == GAME_OBJECT){
 		Game_object *g = m_symbol->get_game_object_value();
@@ -175,3 +214,8 @@ Animation_block* Variable::get_animation_block_value(){
 	Animation_block *a = m_symbol->get_animation_block_value();
 	return a;
 }
+
+string Variable::get_symbol_name(){
+	return m_symbol->name;
+}
+

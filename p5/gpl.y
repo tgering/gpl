@@ -71,7 +71,8 @@ using namespace std;
 
 %code requires 
 {
-  #include "expression.h"  
+  #include "expression.h" 
+  #include "variable.h" 
 }
 
 %union 
@@ -80,6 +81,7 @@ using namespace std;
  double         union_double;
  std::string    *union_string;  // MUST be a pointer to a string (this sucks!)
  Expression     *union_expression;
+ Variable       *union_variable;
 }
 
 // Tokens with a < > after the %token require a type.
@@ -216,6 +218,7 @@ using namespace std;
 %type <union_expression> optional_initializer
 %type <union_expression> primary_expression
 %type <union_int> math_operator
+%type <union_variable> variable 
 
 %nonassoc UNARY_OPS
 
@@ -269,12 +272,7 @@ simple_type  T_ID  optional_initializer {
     else if($1 == T_STRING){
         string initial_value = "";
         if($3 != NULL){
-            if($3->get_type() != STRING){
-                //REMIND - ERROR
-            }
-            else{
-                initial_value = $3->eval_string();
-            }
+            initial_value = $3->eval_string();   
         }
 
         Symbol *s = my_table->lookup(*($2));
@@ -292,7 +290,7 @@ simple_type  T_ID  optional_initializer {
     else if($1 == T_DOUBLE){
         double initial_value = 0.0;
         if($3 != NULL){
-            if($3->get_type() != DOUBLE){
+            if($3->get_type() == STRING){
                 //REMIND - ERROR
             }
             else{
@@ -373,6 +371,9 @@ optional_initializer:
         $$ = $2;
     }
     | empty
+    {
+        $$ = NULL;
+    }
     ;
 
 //---------------------------------------------------------------------
@@ -548,6 +549,10 @@ assign_statement:
 //---------------------------------------------------------------------
 variable:
     T_ID
+    {
+       Symbol *s = my_table->lookup(*$1);
+       $$ = new Variable(NULL,s);
+    }
     | T_ID T_LBRACKET expression T_RBRACKET
     | T_ID T_PERIOD T_ID
     | T_ID T_LBRACKET expression T_RBRACKET T_PERIOD T_ID
@@ -572,6 +577,12 @@ expression:
             $$ = new Expression($1, AND, $3);
         }
         else{
+            if($1->get_type() == STRING){
+                Error::error(Error::INVALID_LEFT_OPERAND_TYPE, "&&");
+            }
+            if($3->get_type() == STRING){
+                Error::error(Error::INVALID_RIGHT_OPERAND_TYPE, "&&");
+            }
             $$ = new Expression(0);
         }
     }
@@ -597,7 +608,7 @@ expression:
     }
 
     | expression T_EQUAL expression
-    {
+    {  
         $$ = new Expression($1, EQUAL, $3);
     }
 
@@ -638,6 +649,12 @@ expression:
             $$ = new Expression($1, DIVIDE, $3);
         }
         else{
+            if($1->get_type() == STRING){
+                Error::error(Error::INVALID_LEFT_OPERAND_TYPE, "/");
+            }
+            else if($3->get_type() == STRING){
+                Error::error(Error::INVALID_RIGHT_OPERAND_TYPE, "/");
+            }
             $$ = new Expression(0);
         }
     }
@@ -645,7 +662,22 @@ expression:
     | expression T_MOD expression
     {
         if($1->get_type() == INT && $3->get_type() == INT){
-            $$ = new Expression($1,MOD,$3);
+            if($3->eval_int() == 0){
+                Error::error(Error::MOD_BY_ZERO_AT_PARSE_TIME);
+                $$ = new Expression(0);
+            }
+            else{
+                $$ = new Expression($1,MOD,$3);
+            }
+        }
+        else{
+            if($1->get_type() != INT){
+                Error::error(Error::INVALID_LEFT_OPERAND_TYPE, operator_to_string(MOD));         
+            }
+            if($3->get_type() != INT){
+                Error::error(Error::INVALID_RIGHT_OPERAND_TYPE, operator_to_string(MOD));
+            }
+            $$ = new Expression(0);
         }
     }
 
@@ -664,6 +696,7 @@ expression:
             $$ = new Expression(NOT, $2);
         }
         else{
+            Error::error(Error::INVALID_RIGHT_OPERAND_TYPE, "!");
             $$ = new Expression(0);
         }
     }
@@ -683,11 +716,11 @@ expression:
 primary_expression:
     T_LPAREN  expression T_RPAREN
     {
-        //REMIND
+        $$ = $2;
     }
     | variable
     {
-        //REMIND
+        $$ = new Expression($1);
     }
     | T_INT_CONSTANT
     {

@@ -10,6 +10,7 @@ Assign_statement::Assign_statement(Variable *v, Expression *e, op_type op){
 void Assign_statement::execute(){
 	if(m_op == EQUAL){
 		if(m_v->get_type() == INT){
+			
 			m_v->set_int_value(m_e->eval_int());
 		}
 		else if(m_v->get_type() == STRING){
