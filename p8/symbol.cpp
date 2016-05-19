@@ -103,6 +103,9 @@ Animation_block* Symbol::get_animation_block_value(){
 	return a;
 }
 
+void Symbol::set_animation_block_value(Animation_block *ab){
+	a = ab;
+}
 
 
 

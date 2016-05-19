@@ -136,8 +136,6 @@ int Expression::eval_int(){
 		return m_variable->get_int_value();
 	}
 	else{
-		Symbol *lft;
-		Symbol *rht;
 		Game_object *lgo;
 		Game_object *rgo;
 		assert(m_type == INT);
@@ -242,17 +240,13 @@ int Expression::eval_int(){
 					return m_lhs->eval_int() == m_rhs->eval_int();	
 				}
 			case NEAR:
-					lft = m_lhs->m_variable->get_symbol_value();
-					rht = m_rhs->m_variable->get_symbol_value();
-					lgo = lft->get_game_object_value();
-					rgo = rht->get_game_object_value();
+					lgo = m_lhs->m_variable->get_game_object_value();
+					rgo = m_rhs->m_variable->get_game_object_value();
 					return lgo->near(rgo);
 
 			case TOUCHES:
-					lft = m_lhs->m_variable->get_symbol_value();
-					rht = m_rhs->m_variable->get_symbol_value();
-					lgo = lft->get_game_object_value();
-					rgo = rht->get_game_object_value();
+					lgo = m_lhs->m_variable->get_game_object_value();
+					rgo = m_rhs->m_variable->get_game_object_value();
 					return lgo->touches(rgo);
 
 			default:

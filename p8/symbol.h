@@ -98,6 +98,7 @@ class Symbol
 		void set_game_object_value(Game_object *go);
 		bool is_animation_block();
 		Animation_block* get_animation_block_value();
+		void set_animation_block_value(Animation_block *ab);
 		bool is_game_object();
 		int get_int_value();
 		double get_double_value();

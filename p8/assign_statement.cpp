@@ -28,6 +28,9 @@ void Assign_statement::execute(){
 		else if(m_v->get_type() == STRING_ARRAY){
 			m_v->set_string_value(m_e->eval_string());
 		}
+		else if(m_v->get_type() == ANIMATION_BLOCK){
+			m_v->set_animation_block_value(m_e->eval_animation_block());
+		}
 	}
 	else if(m_op == PLUS_EQUAL){
 		if(m_v->get_type() == INT){

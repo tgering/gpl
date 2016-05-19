@@ -219,11 +219,59 @@ void Variable::set_double_value(double d){
 }
 
 Animation_block* Variable::get_animation_block_value(){
-	Animation_block *a = m_symbol->get_animation_block_value();
-	return a;
+	Animation_block *a;
+	Gpl_type t = m_symbol->get_type();
+	if(t == GAME_OBJECT_ARRAY){
+		V *v = m_symbol->get_value();
+		Game_object *g = v->ga[m_expression->eval_int()];
+		g->get_member_variable(m_s,a);
+		return a;
+	}
+	else{
+		if(m_s == ""){
+			return m_symbol->get_animation_block_value();
+		}
+		else{
+			Game_object *g = m_symbol->get_game_object_value();
+			g->get_member_variable(m_s,a);
+			return a;
+		}
+	}
+}
+
+void Variable::set_animation_block_value(Animation_block *a){
+	Gpl_type t = m_symbol->get_type();
+	if(t == GAME_OBJECT_ARRAY){
+		V *v = m_symbol->get_value();
+		Game_object *g = v->ga[m_expression->eval_int()];
+		g->set_member_variable(m_s,a);
+	}
+	else{
+		if(m_s == ""){
+			m_symbol->set_animation_block_value(a);
+		}
+		else{
+			Game_object *g = m_symbol->get_game_object_value();
+			g->set_member_variable(m_s,a);
+		}
+	}
 }
 
 string Variable::get_symbol_name(){
 	return m_symbol->name;
+}
+
+Game_object* Variable::get_game_object_value(){
+	Gpl_type t = m_symbol->get_type();
+	if(t == GAME_OBJECT){
+		return m_symbol->get_game_object_value();
+	}
+	else if(t == GAME_OBJECT_ARRAY){
+		V *v = m_symbol->get_value();
+		return v->ga[m_expression->eval_int()];
+	}
+	else{
+		return NULL;
+	}
 }
 

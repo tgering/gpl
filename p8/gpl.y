@@ -239,6 +239,7 @@ Event_manager *my_event_manager = Event_manager::instance();
 %type <union_int> geometric_operator
 %type <union_variable> variable 
 %type <union_symbol> animation_parameter
+%type <union_symbol> check_animation_parameter
 %type <union_statement_block> end_of_statement_block
 %type <union_statement_block> statement_block
 %type <union_statement_block> if_block
@@ -605,10 +606,14 @@ animation_block:
         Symbol *s = my_table->lookup(*$2);
         if(s != NULL){
             Animation_block *a = s->get_animation_block_value();
+            if(a->get_parameter_symbol()->get_name() != $4->get_name()){
+                Error::error(Error::ANIMATION_PARAM_DOES_NOT_MATCH_FORWARD);
+            }
             my_block_stack.push(a);
         }
         else{
-            //REMIND - error
+            Error::error(Error::NO_FORWARD_FOR_ANIMATION_BLOCK,*$2);
+            my_block_stack.push(NULL);
         } 
     } 
     T_RPAREN T_LBRACE statement_list T_RBRACE end_of_statement_block
@@ -703,6 +708,7 @@ check_animation_parameter:
         s->name = *($2);
         s->type = GAME_OBJECT;
         my_table->insert(*($2), s);
+        $$ = s;
     }
     | T_PIXMAP T_ID
     {
@@ -713,6 +719,7 @@ check_animation_parameter:
         s->type = GAME_OBJECT;
         s->name = *($2);
         my_table->insert(*($2), s);
+        $$ = s;
     }
     | T_CIRCLE T_ID
     {
@@ -723,6 +730,7 @@ check_animation_parameter:
         s->type = GAME_OBJECT;
         s->name = *($2);
         my_table->insert(*($2), s);
+        $$ = s;
     }
     | T_RECTANGLE T_ID
     {
@@ -733,6 +741,7 @@ check_animation_parameter:
         s->type = GAME_OBJECT;
         s->name = *($2);
         my_table->insert(*($2), s);
+        $$ = s;
     }
     | T_TEXTBOX T_ID
     {
@@ -743,6 +752,7 @@ check_animation_parameter:
         s->type = GAME_OBJECT;
         s->name = *($2);
         my_table->insert(*($2), s);
+        $$ = s;
     }
     ;
 
@@ -990,9 +1000,6 @@ assign_statement:
             else{
                 Gpl_type et = $3->get_type();
                 Gpl_type vt = $1->get_type();
-                if(vt == ANIMATION_BLOCK){
-                    cout << "ANDIM" << endl;
-                }
                 if (((vt == INT || vt == INT_ARRAY) && et == INT)
                     || ((vt == DOUBLE || vt == DOUBLE_ARRAY) && (et ==INT || et == DOUBLE))
                     || (vt == STRING || vt == STRING_ARRAY) && (et == INT || et == DOUBLE || et == STRING )) {
@@ -1000,6 +1007,22 @@ assign_statement:
                     my_block_stack.top()->push_statement(s);
                     $$ = my_block_stack.top();
                 } 
+                else if(vt == ANIMATION_BLOCK && et == ANIMATION_BLOCK){
+                    Game_object *g = $1->get_game_object_value();
+                    Animation_block *a = $3->eval_animation_block();
+                    Symbol *sy = a->get_parameter_symbol();
+                    Game_object *g2 = sy->get_game_object_value();
+                    if(g->type() == g2->type()){
+                        Statement *s = new Assign_statement((Variable *) $1, (Expression *) $3, Assign_statement::EQUAL);
+                        my_block_stack.top()->push_statement(s);
+                        $$ = my_block_stack.top();
+                    }
+                    else{
+                        Error::error(Error::ANIMATION_BLOCK_ASSIGNMENT_PARAMETER_TYPE_ERROR,g->type(),g2->type());
+                        $$ = NULL;
+                    }
+
+                }
                 else {
                     if (vt == INT || vt== DOUBLE || vt==STRING || vt==INT_ARRAY || vt == STRING_ARRAY || vt == DOUBLE_ARRAY){
                     Error::error(Error::ASSIGNMENT_TYPE_ERROR, gpl_type_to_string(vt), gpl_type_to_string(et));
@@ -1185,6 +1208,21 @@ variable:
                             $$ = NULL;
                         }
                     }
+                    else if(type == ANIMATION_BLOCK){
+                        Animation_block *a;
+                        Status stat = g->get_member_variable(*$3, a);
+                        if(stat == OK){
+                            $$ = new Variable(s, *$3);
+                        }
+                        else if(stat == MEMBER_NOT_DECLARED){
+                            Error::error(Error::UNDECLARED_MEMBER, *$1, *$3);
+                            $$ = NULL;
+                        }
+                        else if(stat == MEMBER_NOT_OF_GIVEN_TYPE){
+                            Error::error(Error::INCORRECT_CONSTRUCTOR_PARAMETER_TYPE, *$3);
+                            $$ = NULL;
+                        }
+                    }
                     else{
                         //REMIND -- might need error here
                         $$ = NULL;
@@ -1259,6 +1297,21 @@ variable:
                             else if(type == DOUBLE){
                                 double d;
                                 Status stat = g->get_member_variable(*$6, d);
+                                if(stat == OK){
+                                    $$ = new Variable(s, $3, *$6);
+                                }
+                                else if(stat == MEMBER_NOT_DECLARED){
+                                    Error::error(Error::UNKNOWN_CONSTRUCTOR_PARAMETER, *$6);
+                                    $$ = NULL;  
+                                }
+                                else if(stat == MEMBER_NOT_OF_GIVEN_TYPE){
+                                    Error::error(Error::INCORRECT_CONSTRUCTOR_PARAMETER_TYPE, *$6);
+                                    $$ = NULL;
+                                }
+                            }
+                            else if(type == ANIMATION_BLOCK){
+                                Animation_block *a;
+                                Status stat = g->get_member_variable(*$6, a);
                                 if(stat == OK){
                                     $$ = new Variable(s, $3, *$6);
                                 }
